@@ -15,7 +15,7 @@ from PyAstronomy.pyasl import fastRotBroad
 from scipy.interpolate import interp1d
 from scipy.signal import savgol_filter
 from typeguard import typechecked
-
+from pandas import DataFrame
 
 @typechecked
 def lowpass_filter(flux: np.ndarray, window_length: int) -> np.ndarray:
@@ -344,3 +344,35 @@ def load_bt_settl_template(
         broad_flux = np.copy(flux_even)
 
     return broad_flux, waves_even * 1e3
+
+@typechecked
+def identify_closest_pair(sequence: str
+) -> list:
+    """
+    Function that identifies (the indices of) the nodding pair closest in time for a given sequence of nodding positions. 
+    In case of ambiguity, it chooses the one earlier in time, e.g. for seq = 'ABAB', it returns [1,0,1,2]
+
+    Parameters
+    ----------
+    sequence: str
+        Sequence of nodding positions, usually repetitions of 'ABAB' or 'ABBA', e.g. seq = 'ABAB'
+
+    Returns
+    -------
+    list
+        The indices of the nodding pairs closest in time
+    """
+    print(sequence)
+    new_seq = DataFrame()
+    new_seq['nodding_pos'] = np.array(','.join(sequence).split(','),dtype=str)
+    closest_pair_list = []
+    for index_nod in range(len(new_seq)):
+        nod_pos = new_seq.loc[index_nod,'nodding_pos']
+        if nod_pos == 'A':
+            other_nod = 'B'
+        else:
+            other_nod = 'A'
+        dist = new_seq[new_seq['nodding_pos'] == other_nod].index - index_nod
+        closest_pair = index_nod+dist[np.argmin(np.abs(dist))]
+        closest_pair_list += [closest_pair]
+    return closest_pair_list
